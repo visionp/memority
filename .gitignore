@@ -99,3 +99,13 @@ ENV/
 
 # mypy
 .mypy_cache/
+
+.idea
+env
+logs
+boxes
+memority.db
+/memority/memority_core/geth/geth
+backups
+_dev
+_dev.*

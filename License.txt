@@ -1,0 +1,1 @@
+This is an Alpha version of Memority app. It might be unstable, have bugs and errors. Please keep in mind that in some cases your stored data may be lost, although we`ll do everything in our power to prevent this.

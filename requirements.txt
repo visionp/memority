@@ -1,0 +1,15 @@
+aiofiles
+aiohttp
+apscheduler
+cchardet
+cryptography
+ecdsa
+py-solc
+PyQt5
+pysha3
+PyYAML
+quamash
+raven
+sqlalchemy
+sqlalchemy-aio
+web3==3.16.5
