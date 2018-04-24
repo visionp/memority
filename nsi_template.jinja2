@@ -1,0 +1,128 @@
+!define APPNAME "Memority"
+!define APPNAMEANDVERSION "Memority {{ version }}"
+
+; Main Install settings
+Name "${APPNAMEANDVERSION}"
+InstallDir "$PROGRAMFILES\Memority"
+InstallDirRegKey HKLM "Software\${APPNAME}" ""
+OutFile "Memority-{{ version }}-setup.exe"
+
+; Modern interface settings
+!include "MUI2.nsh"
+
+!define MUI_ICON "img\icon.ico"
+!define MUI_HEADERIMAGE
+!define MUI_HEADERIMAGE_BITMAP "img\installer_top_icon.bmp"
+!define MUI_WELCOMEFINISHPAGE_BITMAP "img\installer_side_icon.bmp"
+!define MUI_UNWELCOMEFINISHPAGE_BITMAP "img\installer_side_icon.bmp"
+!define MUI_HEADERIMAGE_RIGHT
+!define MUI_ABORTWARNING
+
+!insertmacro MUI_PAGE_WELCOME
+!insertmacro MUI_PAGE_LICENSE "License.txt"
+!insertmacro MUI_PAGE_COMPONENTS
+!insertmacro MUI_PAGE_DIRECTORY
+!insertmacro MUI_PAGE_INSTFILES
+!insertmacro MUI_PAGE_FINISH
+
+!insertmacro MUI_UNPAGE_CONFIRM
+!insertmacro MUI_UNPAGE_INSTFILES
+
+; Set languages (first is default language)
+!insertmacro MUI_LANGUAGE "English"
+!insertmacro MUI_RESERVEFILE_LANGDLL
+
+Section "Memority Core" Section1
+
+	; Set Section properties
+	SectionIn RO
+	SetOverwrite on
+
+	; Set Section Files and Shortcuts
+{% for dir, files in core_files %}
+	SetOutPath "$INSTDIR\{{ dir }}\"{% for file in files %}
+	File "{{ file }}"{% endfor %}{% endfor %}
+
+SectionEnd
+
+Section "Memority UI" Section2
+
+	; Set Section properties
+	SectionIn RO
+	SetOverwrite on
+
+	; Set Section Files and Shortcuts
+{% for dir, files in ui_files %}
+	SetOutPath "$INSTDIR\{{ dir }}\"{% for file in files %}
+	File "{{ file }}"{% endfor %}{% endfor %}
+
+SectionEnd
+
+Section "Start Menu Shortcuts" Section3
+
+	; Set Section Files and Shortcuts
+	CreateDirectory "$SMPROGRAMS\Memority"
+	CreateShortCut "$SMPROGRAMS\Memority\Uninstall.lnk" "$INSTDIR\uninstall.exe"
+	CreateShortCut "$SMPROGRAMS\Memority\Memority Core.lnk" "$INSTDIR\core\memority_core_systray.exe"
+	CreateShortCut "$SMPROGRAMS\Memority\Memority UI.lnk" "$INSTDIR\ui\memority_gui.exe"
+
+SectionEnd
+
+Section "Desktop Shortcuts" Section4
+
+	; Set Section Files and Shortcuts
+	CreateShortCut "$DESKTOP\Memority Core.lnk" "$INSTDIR\core\memority_core_systray.exe"
+	CreateShortCut "$DESKTOP\Memority UI.lnk" "$INSTDIR\ui\memority_gui.exe"
+
+SectionEnd
+
+Section "Run Memority Core on startup" Section5
+
+	; Set Section Files and Shortcuts
+	CreateShortCut "$SMSTARTUP\Memority Core.lnk" "$INSTDIR\core\memority_core_systray.exe"
+
+SectionEnd
+
+Section -FinishSection
+
+	WriteRegStr HKLM "Software\${APPNAME}" "" "$INSTDIR"
+	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "DisplayName" "${APPNAME}"
+	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "UninstallString" "$INSTDIR\uninstall.exe"
+	WriteUninstaller "$INSTDIR\uninstall.exe"
+
+SectionEnd
+
+; Modern install component descriptions
+!insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
+	!insertmacro MUI_DESCRIPTION_TEXT ${Section1} ""
+	!insertmacro MUI_DESCRIPTION_TEXT ${Section2} ""
+!insertmacro MUI_FUNCTION_DESCRIPTION_END
+
+;Uninstall section
+Section Uninstall
+
+	;Remove from registry...
+	DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}"
+	DeleteRegKey HKLM "SOFTWARE\${APPNAME}"
+
+	; Delete self
+	Delete "$INSTDIR\uninstall.exe"
+
+	; Delete Shortcuts
+	Delete "$SMPROGRAMS\Memority\Uninstall.lnk"
+	Delete "$SMPROGRAMS\Memority\Memority Core.lnk"
+	Delete "$DESKTOP\Memority Core.lnk"
+	Delete "$SMPROGRAMS\Memority\Memority UI.lnk"
+	Delete "$DESKTOP\Memority UI.lnk"
+	Delete "$SMSTARTUP\Memority Core.lnk"
+
+	; Clean up Memority
+	RMDir "$SMPROGRAMS\Memority"
+	RMDir /r /REBOOTOK "$INSTDIR\"
+	RMDir /r /REBOOTOK "$APPDATA\Memority\"
+
+SectionEnd
+
+BrandingText "memority.io"
+
+; eof
