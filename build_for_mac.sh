@@ -32,19 +32,19 @@ cp -r memority/memority_core/smart_contracts/install dist/Memority\ Core.app/Con
 cp memority/memority_core/geth/darwin/geth dist/Memority\ Core.app/Contents/MacOS/geth
 
 echo "--------------------------------------------------"
-echo "Building .pkg"
+echo "Building package"
 
-VERSION="alpha-$(date +%s)"
-
-pkgbuild --analyze --root dist/Memority\ Core.app ./dist/MemorityCoreAppComponents.plist
-pkgbuild --analyze --root dist/Memority\ UI.app ./dist/MemorityUIAppComponents.plist
-
-pkgbuild --install-location /Applications --component dist/Memority\ Core.app --identifier io.memority.pkg.memoritycore --version "${VERSION}" ./dist/Memority\ Core.pkg
-pkgbuild --install-location /Applications --component dist/Memority\ UI.app --identifier io.memority.pkg.memorityui --version "${VERSION}" ./dist/Memority\ UI.pkg
-pkgbuild --root dist/Memority\ UI.app --version "${VERSION}" --component-plist ./dist/MemorityUIAppComponents.plist --identifier io.memority.pkg.memorityui --install-location /Applications ./dist/Memority\ UI.pkg
-
-productbuild --synthesize --package ./dist/Memority\ Core.pkg --package ./dist/Memority\ UI.pkg ./dist/Distribution.xml
-
-productbuild --distribution ./dist/Distribution.xml --package-path ./dist "./Memority-alpha-${VERSION}.pkg"
+VERSION="alpha-$(date +%s)"#
+#
+#pkgbuild --analyze --root dist/Memority\ Core.app ./dist/MemorityCoreAppComponents.plist
+#pkgbuild --analyze --root dist/Memority\ UI.app ./dist/MemorityUIAppComponents.plist
+#
+#pkgbuild --install-location /Applications --root dist/Memority\ Core.app --version "${VERSION}" --component-plist ./dist/MemorityCoreAppComponents.plist --identifier io.memority.pkg.memoritycore ./dist/Memority\ Core.pkg
+#pkgbuild --install-location /Applications --root dist/Memority\ UI.app --version "${VERSION}" --component-plist ./dist/MemorityUIAppComponents.plist --identifier io.memority.pkg.memorityui ./dist/Memority\ UI.pkg
+#
+#productbuild --synthesize --package ./dist/Memority\ Core.pkg --package ./dist/Memority\ UI.pkg ./dist/Distribution.xml
+#
+#productbuild --distribution ./dist/Distribution.xml --package-path ./dist "./Memority-alpha-${VERSION}.pkg"
+dmgbuild -s dmg_settings.py "Memority" "Memority-alpha-${VERSION}.dmg"
 
 echo "Done!"

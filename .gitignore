@@ -111,3 +111,4 @@ _dev
 _dev.*
 .DS_Store
 *.pkg
+*.dmg
