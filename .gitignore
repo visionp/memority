@@ -109,3 +109,4 @@ memority.db
 backups
 _dev
 _dev.*
+.DS_Store
