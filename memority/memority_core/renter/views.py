@@ -121,7 +121,7 @@ async def upload_file(**kwargs):
         tokens_to_deposit = await ask_user_for__(
             'tokens_to_deposit',
             'Choose token amount for file deposit\n'
-            f'({token_contract.wmmr_to_mmr(token_contract.tokens_per_byte_hour*file.size*24*14)} MMR for 2 weeks)',
+            f'({token_contract.wmmr_to_mmr(token_contract.tokens_per_byte_hour*file.size*10*24*14)} MMR for 2 weeks)',
             type_='float'
         )
         if not tokens_to_deposit:
