@@ -26,6 +26,8 @@ from utils import ask_for_password
 
 
 def process_line(line):
+    if isinstance(line, bytes):
+        line = line.decode('utf-8')
     if line:
         print(line.strip())
     if 'Block synchronisation started' in line:
@@ -97,7 +99,7 @@ class MemorityCore:
              'init', settings.geth_init_json],
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
-            universal_newlines=True,
+            #universal_newlines=True,
             bufsize=1,
             close_fds=ON_POSIX
         )
@@ -129,13 +131,15 @@ class MemorityCore:
              '--nodiscover'],
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
-            universal_newlines=True,
+            #universal_newlines=True,
             bufsize=1,
             startupinfo=startupinfo,
             creationflags=creationflags
         )
         while True:
             line = self.p.stdout.readline()
+            if isinstance(line, bytes):
+                line = line.decode('utf-8')
             if line:
                 print(line.strip())
             if 'IPC endpoint opened' in line:
