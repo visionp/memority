@@ -492,7 +492,8 @@ class RenterFile(Base, ManagedMixin):
                                                          await token_contract.get_deposit(file_hash=self.hash) /
                                                          (
                                                                  token_contract.tokens_per_byte_hour *
-                                                                 client_contract.get_file_size(self.hash)
+                                                                 client_contract.get_file_size(self.hash) *
+                                                                 10  # hosters per file
                                                          )
                                                  )
                                              )
