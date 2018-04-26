@@ -34,7 +34,7 @@ cp memority/memority_core/geth/darwin/geth dist/Memority\ Core.app/Contents/MacO
 echo "--------------------------------------------------"
 echo "Building package"
 
-VERSION="alpha-$(date +%s)"#
+VERSION="alpha-$(date +%s)"
 #
 #pkgbuild --analyze --root dist/Memority\ Core.app ./dist/MemorityCoreAppComponents.plist
 #pkgbuild --analyze --root dist/Memority\ UI.app ./dist/MemorityUIAppComponents.plist
