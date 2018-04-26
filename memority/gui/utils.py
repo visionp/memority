@@ -1,10 +1,20 @@
+import requests
+
 from handlers import error_handler
 from settings import settings
 from bugtracking import raven_client
 
+__all__ = ['unlock_account', 'get_user_role', 'get_address', 'get_balance', 'get_token_price', 'get_host_ip',
+           'create_account', 'generate_address', 'set_disk_space_for_hosting', 'get_disk_space_for_hosting',
+           'import_account', 'export_account']
 
-__all__ = ['get_user_role', 'get_address', 'get_balance', 'get_token_price', 'get_host_ip', 'create_account',
-           'generate_address', 'set_disk_space_for_hosting', 'get_disk_space_for_hosting']
+
+def unlock_account(_password):
+    r = requests.post(f'{settings.daemon_address}/unlock/', json={"password": _password})
+    if not r.status_code == 200:
+        error_handler('Invalid password!')
+        return False
+    return True
 
 
 async def fetch(address, session):
@@ -78,6 +88,36 @@ async def generate_address(password, session):
             msg = data.get('message')
             error_handler(f'Generating address failed.\n{msg}')
             return False
+
+
+async def import_account(filename, session):
+    async with session.post(
+            f'{settings.daemon_address}/user/import/',
+            json={
+                "filename": filename
+            }
+    ) as result:
+        if result.status != 200:
+            data = await result.json()
+            msg = data.get('message')
+            error_handler(msg)
+            return False
+    return True
+
+
+async def export_account(filename, session):
+    async with session.post(
+            f'{settings.daemon_address}/user/export/',
+            json={
+                "filename": filename
+            }
+    ) as result:
+        if result.status != 200:
+            data = await result.json()
+            msg = data.get('message')
+            error_handler(msg)
+            return False
+    return True
 
 
 async def set_disk_space_for_hosting(disk_space, session):

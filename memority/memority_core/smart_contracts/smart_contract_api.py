@@ -109,7 +109,7 @@ def _get_contract_address(contract_name):
         address = _get_contract_address_by_tx(tx_hash)
         if address:
             setattr(settings, f'{contract_name.lower()}_contract_address', address)
-            # settings.dump()
+            settings.dump()
             return address
 
 
@@ -178,8 +178,12 @@ class Contract:
         self.deploy_args = deploy_args
         self.contract_name = contract_name
         self.gas = gas
-        self.contract = _get_contract_instance(contract_name, address)
-        self.address = address if address else _get_contract_address(self.contract_name)
+        try:
+            self.contract = _get_contract_instance(contract_name, address)
+            self.address = address if address else _get_contract_address(self.contract_name)
+        except settings.Locked:
+            self.contract = None
+            self.address = None
 
     async def deploy(self):
         logger.info(f'Deploying contract | name: {self.contract_name}')
@@ -191,8 +195,12 @@ class Contract:
         return address
 
     def reload(self):
-        self.address = _get_contract_address(self.contract_name)
-        self.contract = _get_contract_instance(self.contract_name, self.address)
+        try:
+            self.address = _get_contract_address(self.contract_name)
+            self.contract = _get_contract_instance(self.contract_name, self.address)
+        except settings.Locked:
+            self.address = None
+            self.contract = None
 
 
 class TokenContract(Contract):

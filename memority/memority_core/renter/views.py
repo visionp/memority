@@ -20,7 +20,7 @@ from utils import ask_for_password, check_first_run, DecryptionError, get_ip
 
 
 __all__ = ['upload_file', 'download_file', 'list_files', 'view_config', 'set_disk_space_for_hosting',
-           'upload_to_hoster', 'view_user_info', 'create_account', 'unlock']
+           'upload_to_hoster', 'view_user_info', 'create_account', 'unlock', 'import_account', 'export_account']
 
 logger = logging.getLogger('memority')
 
@@ -464,11 +464,24 @@ async def create_account(request: web.Request):
             ip = await get_ip()
             ip = f'{ip}:{settings.hoster_app_port}'
             await memo_db_contract.add_or_update_host(ip=ip)
-        settings.role = role
         return web.json_response({"status": "success"}, status=201)
     except:
         # ToDo: cleanup
         raise
+
+
+async def import_account(request):
+    data = await request.json()
+    filename = data.get('filename')
+    settings.import_account(filename)
+    return web.json_response({"status": "success"}, status=200)
+
+
+async def export_account(request):
+    data = await request.json()
+    filename = data.get('filename')
+    settings.export_account(filename)
+    return web.json_response({"status": "success"}, status=200)
 
 
 async def unlock(request: web.Request):
@@ -476,7 +489,9 @@ async def unlock(request: web.Request):
     password = data.get('password')
     settings.unlock(password)
     smart_contracts.smart_contract_api.ask_for_password = partial(ask_for_password, password)
-    smart_contracts.smart_contract_api.w3 = smart_contracts.smart_contract_api.create_w3()
+    global w3
+    w3 = smart_contracts.smart_contract_api.create_w3()
+    smart_contracts.smart_contract_api.w3 = w3
     client_contract.reload()
     token_contract.reload()
     memo_db_contract.reload()

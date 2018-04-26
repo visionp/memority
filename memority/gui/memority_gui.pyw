@@ -16,6 +16,7 @@ from dialogs import ask_for_password
 from handlers import process_ws_message, error_handler
 from settings import settings
 from tabs import TabsWidget
+from utils import unlock_account
 
 
 class MainWindow(QMainWindow):
@@ -42,6 +43,7 @@ class MainWindow(QMainWindow):
         self.table_widget = TabsWidget(self)
         self.log_widget.setReadOnly(True)
         self.add_file_list_item = self.table_widget.tab_files.files_list_widget.add_item
+        self.cleanup_file_list = self.table_widget.tab_files.files_list_widget.cleanup_file_list
         self.table_widget.tab_files.controls_widget.uploadButton.clicked.connect(
             self.open_file_dialog
         )
@@ -57,7 +59,6 @@ class MainWindow(QMainWindow):
         x = int((sg.width() - widget.width()) / 4)
         y = int((sg.height() - widget.height()) / 3)
         self.move(x, y)
-        asyncio.ensure_future(self.show_files())
         asyncio.ensure_future(self.refresh())
         self.show()
 
@@ -67,6 +68,7 @@ class MainWindow(QMainWindow):
         await self.table_widget.tab_settings.refresh()
         await self.table_widget.tab_wallet.info_widget.refresh()
         await self.table_widget.tab_hosting.refresh()
+        await self.show_files()
         # await asyncio.sleep(5)
 
     def resizeEvent(self, event):
@@ -100,6 +102,7 @@ class MainWindow(QMainWindow):
         ))
 
     async def ws_handler(self):
+        # ToDo: use QtWebSockets.QWebSocket, without asyncio
         try:
             session = aiohttp.ClientSession()
             self._ws = await session.ws_connect(settings.daemon_address)
@@ -182,14 +185,6 @@ def check_if_daemon_running():
                 sys.exit()
 
 
-def unlock_account(_password):
-    r = requests.post(f'{settings.daemon_address}/unlock/', json={"password": _password})
-    if not r.status_code == 200:
-        error_handler('Invalid password!')
-        return False
-    return True
-
-
 if __name__ == '__main__':
     check_if_daemon_running()
     _app = QApplication(sys.argv)
@@ -197,7 +192,7 @@ if __name__ == '__main__':
         while True:
             password, ok = ask_for_password('Password:')
             if not ok:
-                sys.exit(1)
+                sys.exit()
             if not unlock_account(password):
                 continue
             break

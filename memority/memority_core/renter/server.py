@@ -145,6 +145,8 @@ def create_renter_app():
     app.router.add_route('GET', '/info/{name}/', view_config)
     app.router.add_route('GET', '/user/{attr}/', view_user_info)
     app.router.add_route('POST', '/user/create/', create_account)
+    app.router.add_route('POST', '/user/import/', import_account)
+    app.router.add_route('POST', '/user/export/', export_account)
     app.router.add_route('POST', '/unlock/', unlock)
     app.router.add_route('POST', '/disk_space/', set_disk_space_for_hosting)
     return app

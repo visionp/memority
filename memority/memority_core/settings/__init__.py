@@ -3,6 +3,7 @@ import json
 import os
 import platform
 import random
+import shutil
 import string
 from shutil import copyfile
 
@@ -45,9 +46,6 @@ class Settings:
     class InvalidPassword(Exception):
         ...
 
-    # def __init__(self, data: dict) -> None:
-    #     super().__setattr__('data', data)
-
     def __setattr__(self, name: str, value) -> None:
         data = self.load()
         data[name] = value
@@ -59,6 +57,7 @@ class Settings:
             'public_key',
             'private_key',
             'address',
+            'client_contract_address'
         ] and os.path.isfile(self.local_settings_secrets_path):
             if not hasattr(self, 'password'):
                 raise self.Locked
@@ -73,7 +72,13 @@ class Settings:
             return None
 
     def __hasattr__(self, a):
-        return a in self.load()
+        return (
+                a in self.load() or (
+                    a in ['encryption_key', 'public_key', 'private_key', 'address', 'client_contract_address']
+                    if os.path.isfile(self.local_settings_secrets_path)
+                    else False
+                )
+        )
 
     def unlock(self, password):
         super().__setattr__('password', password)
@@ -83,13 +88,17 @@ class Settings:
     def change_password(self):
         ...  # ToDo: implement
 
-    def dump(self, data):
-        with open(self.local_settings_path, 'w') as outfile:
-            yaml.dump(data, outfile, default_flow_style=False)
+    def dump(self, data=None):
+        if not data:
+            data = self.load()
+            self.encrypt_secrets(data)
+        else:
+            with open(self.local_settings_path, 'w') as outfile:
+                yaml.dump(data, outfile, default_flow_style=False)
 
     def encrypt_secrets(self, data):
         data_to_enc = {}
-        for key in ['encryption_key', 'public_key', 'private_key', 'address']:
+        for key in ['encryption_key', 'public_key', 'private_key', 'address', 'client_contract_address']:
             val = data.pop(key, None)
             if val:
                 data_to_enc[key] = val
@@ -234,6 +243,36 @@ class Settings:
     @property
     def base_dir(self):
         return _base_dir
+
+    def import_account(self, filename):
+        # region Backup current account
+        if os.path.isfile(self.local_settings_secrets_path):
+            local_settings_backup_path = f'{self.local_settings_secrets_path}.bak'
+            if os.path.isfile(local_settings_backup_path):
+                i = 0
+                while True:
+                    _path = f'{local_settings_backup_path}.{i}'
+                    if not os.path.isfile(_path):
+                        local_settings_backup_path = _path
+                        break
+                    i += 1
+            shutil.copyfile(
+                os.path.join(self.local_settings_secrets_path),
+                os.path.join(local_settings_backup_path)
+            )
+        # endregion
+        # region Replace file
+        shutil.copyfile(
+            os.path.join(filename),
+            os.path.join(self.local_settings_secrets_path)
+        )
+        # endregion
+
+    def export_account(self, filename):
+        shutil.copyfile(
+            os.path.join(self.local_settings_secrets_path),
+            os.path.join(filename)
+        )
 
 
 _platform_name = platform.system()
