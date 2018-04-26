@@ -135,6 +135,12 @@ class FileListWidget(QWidget):
         self.list_box.addWidget(scroll)
         self.spacer = QSpacerItem(1, 1, QSizePolicy.Minimum, QSizePolicy.Expanding)
 
+    def cleanup_file_list(self):
+        for i in self.items:
+            self.content_layout.removeWidget(i)
+        self.items = []
+        self.content_layout.addItem(self.spacer)
+
     def add_item(self, hash, signature, name: str, timestamp, status, deposit_ends_on, **kwargs):  # noqa
         item = FileListItemWidget(self.content, hash, signature, name, timestamp, status, deposit_ends_on,
                                   main_window=self.main_window)

@@ -1,3 +1,7 @@
+import sys
+
+import os
+
 import asyncio
 
 from PyQt5.QtWidgets import *
@@ -5,7 +9,7 @@ from PyQt5.QtWidgets import *
 from dialogs import ask_for_password
 from handlers import error_handler, log
 from utils import get_user_role, create_account, generate_address, get_address, get_balance, set_disk_space_for_hosting, \
-    get_disk_space_for_hosting
+    get_disk_space_for_hosting, export_account, import_account, unlock_account
 
 
 class DiskSpaceForHostingWidget(QWidget):
@@ -88,8 +92,6 @@ class TabSettingsWidget(QWidget):
                     self.control_buttons.cancel_btn]:
             btn.setDisabled(True)
 
-        asyncio.ensure_future(self.main_window.refresh())
-
     def log(self, msg, preloader=False):
         return log(msg, self.log_widget, preloader)
 
@@ -108,9 +110,9 @@ class TabSettingsWidget(QWidget):
                     self.control_buttons.cancel_btn]:
             btn.setDisabled(True)
 
+        self.import_account_btn.setEnabled(True)
         if role:
-            # self.import_account_btn.setEnabled(True)
-            # self.export_account_btn.setEnabled(True)
+            self.export_account_btn.setEnabled(True)
             if role in ['hoster', 'both']:
                 self.disk_space_for_hosting.show()
                 self.disk_space_for_hosting.setEnabled(True)
@@ -169,10 +171,38 @@ class TabSettingsWidget(QWidget):
         await self.main_window.refresh()
 
     async def import_account(self):
-        ...
+        filename, _ = QFileDialog.getOpenFileName(
+            None,
+            "Select Directory",
+            os.path.join(os.getenv('HOME', None) or os.getenv('HOMEPATH', None), 'memority_account.bin'),
+            "*.bin"
+        )
+        if filename:
+            self.log('Importing account...')
+            ok = await import_account(filename, self.session)
+            if ok:
+                self.log(f'Successfully imported {filename}')
+                while True:
+                    password, ok = ask_for_password('Password to exported account:')
+                    if not ok:
+                        sys.exit()
+                    if not unlock_account(password):
+                        continue
+                    break
+        await self.main_window.refresh()
 
     async def export_account(self):
-        ...
+        filename, _ = QFileDialog.getSaveFileName(
+            None,
+            "Select Directory",
+            os.path.join(os.getenv('HOME', None) or os.getenv('HOMEPATH', None), 'memority_account.bin'),
+            "*.bin"
+        )
+        if filename:
+            self.log('Exporting account...')
+            ok = await export_account(filename, self.session)
+            if ok:
+                self.log(f'Exported to {filename}')
 
     async def become_a_hoster(self):
         self.log('Adding your address and IP to contract...\n'

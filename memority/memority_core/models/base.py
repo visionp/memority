@@ -477,9 +477,9 @@ class RenterFile(Base, ManagedMixin):
     async def to_json(self):
         res = {c.name: str(getattr(self, c.name)) for c in self.__table__.columns}
         try:
-            name = decrypt(self.name.encode('utf-8')).decode('utf-8')
-        except AttributeError:
-            name = decrypt(self.name).decode('utf-8')
+            name = decrypt(
+                self.name.encode('utf-8') if isinstance(self.name, bytes) else self.name.encode('utf-8')
+            ).decode('utf-8')
         except DecryptionError:
             name = self.name
         res['name'] = name

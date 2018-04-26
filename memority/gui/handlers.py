@@ -72,6 +72,7 @@ def downloaded_file_handler(data, window):
 
 def file_list_handler(data, window):
     file_list = data.get('data').get('files')
+    window.cleanup_file_list()
     for file in file_list:
         window.add_file_list_item(**file)
 
