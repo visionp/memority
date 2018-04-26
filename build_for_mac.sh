@@ -45,6 +45,6 @@ VERSION="alpha-$(date +%s)"#
 #productbuild --synthesize --package ./dist/Memority\ Core.pkg --package ./dist/Memority\ UI.pkg ./dist/Distribution.xml
 #
 #productbuild --distribution ./dist/Distribution.xml --package-path ./dist "./Memority-alpha-${VERSION}.pkg"
-dmgbuild -s dmg_settings.py "Memority" "Memority-alpha-${VERSION}.dmg"
+dmgbuild -s dmg_settings.py "Memority" "Memority-${VERSION}-macos.dmg"
 
 echo "Done!"
