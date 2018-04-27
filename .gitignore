@@ -112,3 +112,6 @@ _dev.*
 .DS_Store
 *.pkg
 *.dmg
+*.nsi
+*.exe
+!geth.exe

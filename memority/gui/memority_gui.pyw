@@ -33,7 +33,7 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(container)
 
         self.msg_for_testers = QLabel(
-            'This is an Alpha version of Memority app. It might be unstable, have bugs and errors. '
+            'This is an Alpha version of Memority app. It might be unstable, have bugs and errors.\n'
             'Please keep in mind that in some cases your stored data may be lost, '
             'although we`ll do everything in our power to prevent this. \n'
             'If the app is not working, it means we`ve released an incompatible update. '
