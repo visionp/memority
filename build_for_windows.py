@@ -1,11 +1,11 @@
+import sys
+
 import contextlib
+import jinja2
 import os
 import shutil
 import subprocess
-import time
 import traceback
-
-import jinja2
 
 
 def makedirs(path):
@@ -130,8 +130,8 @@ def main():
         ]
     }
     compiled = jinja2.Environment(
-        loader=jinja2.FileSystemLoader('.')
-    ).get_template('dist-utils\\nsi_template.jinja2').render(context)
+        loader=jinja2.FileSystemLoader('dist-utils')
+    ).get_template('nsi_template.jinja2').render(context)
 
     with open('memority.nsi', 'w') as f:
         f.write(compiled)
