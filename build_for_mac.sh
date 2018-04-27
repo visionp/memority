@@ -31,20 +31,24 @@ cp -r memority/memority_core/smart_contracts/binaries dist/Memority\ Core.app/Co
 cp -r memority/memority_core/smart_contracts/install dist/Memority\ Core.app/Contents/MacOS/smart_contracts
 cp memority/memority_core/geth/darwin/geth dist/Memority\ Core.app/Contents/MacOS/geth
 
+rm -rf dist/Memority\ Core dist/Memority\ UI
+mkdir dist/core dist/ui
+mv dist/Memority\ Core.app dist/core/Memority\ Core.app
+mv dist/Memority\ UI.app dist/ui/Memority\ UI.app
+
 echo "--------------------------------------------------"
 echo "Building package"
 
-VERSION="alpha-$(date +%s)"
-#
-#pkgbuild --analyze --root dist/Memority\ Core.app ./dist/MemorityCoreAppComponents.plist
-#pkgbuild --analyze --root dist/Memority\ UI.app ./dist/MemorityUIAppComponents.plist
-#
-#pkgbuild --install-location /Applications --root dist/Memority\ Core.app --version "${VERSION}" --component-plist ./dist/MemorityCoreAppComponents.plist --identifier io.memority.pkg.memoritycore ./dist/Memority\ Core.pkg
-#pkgbuild --install-location /Applications --root dist/Memority\ UI.app --version "${VERSION}" --component-plist ./dist/MemorityUIAppComponents.plist --identifier io.memority.pkg.memorityui ./dist/Memority\ UI.pkg
-#
-#productbuild --synthesize --package ./dist/Memority\ Core.pkg --package ./dist/Memority\ UI.pkg ./dist/Distribution.xml
-#
-#productbuild --distribution ./dist/Distribution.xml --package-path ./dist "./Memority-alpha-${VERSION}.pkg"
-dmgbuild -s dmg_settings.py "Memority" "Memority-${VERSION}-macos.dmg"
+VERSION=$1
+
+sed 's/version=\"\"/version=\"'"${VERSION}"'\"/g' dist-utils/Distribution.xml > ./dist/Distribution.xml
+pkgbuild --install-location /Applications/Memority --root dist/core --version "${VERSION}" --component-plist ./dist-utils/MemorityCoreComponents.plist --identifier io.memority.memoritycore ./dist/Memority\ Core.pkg
+pkgbuild --install-location /Applications/Memority --root dist/ui --version "${VERSION}" --component-plist ./dist-utils/MemorityUIComponents.plist --identifier io.memority.memorityui ./dist/Memority\ UI.pkg
+productbuild --distribution ./dist/Distribution.xml --package-path ./dist --resources . "./Memority-${VERSION}-macos-setup.pkg"
+
+echo "--------------------------------------------------"
+echo "Cleanup"
+
+rm -rf build dist *.spec
 
 echo "Done!"
