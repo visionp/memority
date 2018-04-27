@@ -1,15 +1,14 @@
-import json
-import traceback
-from asyncio import CancelledError
-from functools import partial
-
 import contextlib
-from aiohttp import web, WSMsgType
-
+import json
 import renter.views
+import traceback
+from aiohttp import web, WSMsgType
+from asyncio import CancelledError
 from bugtracking import raven_client
+from functools import partial
 from settings import settings
 from utils import check_first_run
+
 from .views import *
 
 global STATE
@@ -35,12 +34,11 @@ async def ask_for_smth(ws: web.WebSocketResponse, details, message, type_):
         return None
 
 
-async def notify_user(ws: web.WebSocketResponse, message, preloader=False):
+async def notify_user(ws: web.WebSocketResponse, message):
     await ws.send_json({
         "status": "success",
         "details": "info",
-        "message": message,
-        "preloader": preloader
+        "message": message
     })
 
 
@@ -48,10 +46,6 @@ async def websocket_handler(request):
     ws = web.WebSocketResponse()
     await ws.prepare(request)
 
-    # smart_contracts.smart_contract_api.ask_for_password = partial(ask_for_password, ws)
-    # logger = logging.getLogger('memority')
-    # ws_log_handler = WSLogHandler(ws=ws)
-    # logger.addHandler(ws_log_handler)
     renter.views.ask_user_for__ = partial(ask_for_smth, ws)
     renter.views.notify_user = partial(notify_user, ws)
 
@@ -148,5 +142,6 @@ def create_renter_app():
     app.router.add_route('POST', '/user/import/', import_account)
     app.router.add_route('POST', '/user/export/', export_account)
     app.router.add_route('POST', '/unlock/', unlock)
+    app.router.add_route('POST', '/request_mmr/', request_mmr)
     app.router.add_route('POST', '/disk_space/', set_disk_space_for_hosting)
     return app

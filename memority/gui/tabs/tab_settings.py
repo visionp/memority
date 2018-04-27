@@ -8,8 +8,7 @@ from PyQt5.QtWidgets import *
 
 from dialogs import ask_for_password
 from handlers import error_handler, log
-from utils import get_user_role, create_account, generate_address, get_address, get_balance, set_disk_space_for_hosting, \
-    get_disk_space_for_hosting, export_account, import_account, unlock_account
+from utils import *
 
 
 class DiskSpaceForHostingWidget(QWidget):
@@ -92,8 +91,8 @@ class TabSettingsWidget(QWidget):
                     self.control_buttons.cancel_btn]:
             btn.setDisabled(True)
 
-    def log(self, msg, preloader=False):
-        return log(msg, self.log_widget, preloader)
+    def log(self, msg):
+        return log(msg, self.log_widget)
 
     async def refresh(self):
         role = await get_user_role(self.session)
@@ -140,12 +139,19 @@ class TabSettingsWidget(QWidget):
         if password1 != password2:
             error_handler('Password don`t match!')
             return
-        self.log(f'Generating address\n'
-                 f'This can take up to 60 seconds, as transaction is being written in blockchain.', preloader=True)
+        self.log(f'Generating address...')
         address = await generate_address(password=password1, session=self.session)
         await self.main_window.refresh()
-        self.log(f'Done! Your address: {address}\n'
-                 f'Please send this address to info@memority.io. We’ll give you MMR tokens for testing.')
+        self.log(f'Your address: {address}')
+        key, ok = QInputDialog.getText(
+            None,
+            "Key input",
+            "Paste your Alpha Tester Key here:"
+        )
+        self.log('Please wait while we’ll send you MMR tokens for testing, it may take a few minutes.')
+        balance = await request_mmr(key=key, session=self.session)
+        self.log(f'Done! Your balance: {balance} MMR')
+        await self.main_window.refresh()
 
     async def create_account(self):
         self.create_account_btn.setDisabled(True)
@@ -164,10 +170,11 @@ class TabSettingsWidget(QWidget):
             return
         role = items.get(item)
         self.log(f'Creating account for role "{role}"...\n'
-                 f'This can take up to 60 seconds, as transaction is being written in blockchain.', preloader=True)
+                 f'This can take up to 60 seconds, as transaction is being written in blockchain.')
         ok = await create_account(role=role, session=self.session)
         if ok:
-            self.log('Account successfully created!')
+            self.log('Account successfully created!\n'
+                     'Please back up your account in safe place (you can do it with "Export account" button.)')
         await self.main_window.refresh()
 
     async def import_account(self):
@@ -206,8 +213,7 @@ class TabSettingsWidget(QWidget):
 
     async def become_a_hoster(self):
         self.log('Adding your address and IP to contract...\n'
-                 'This can take up to 60 seconds, as transaction is being written in blockchain.',
-                 preloader=True)
+                 'This can take up to 60 seconds, as transaction is being written in blockchain.')
         ok = await create_account(role='host', session=self.session)
         if ok:
             self.log('Successfully added to hoster list!')

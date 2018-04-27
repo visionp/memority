@@ -1,62 +1,13 @@
 import asyncio
-from threading import Event
-
-from PyQt5.QtCore import QThread
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
 from dialogs import ask_for_password
 
 
-def rm_last_line(log_widget):
-    cursor = log_widget.textCursor()
-    cursor.movePosition(QTextCursor.End)
-    cursor.select(QTextCursor.LineUnderCursor)
-    cursor.removeSelectedText()
-    cursor.deleteChar()
-    log_widget.moveCursor(QTextCursor.End)
-
-
-class PreloaderThread(QThread):
-    def __init__(self, log_widget):
-        super().__init__()
-        self.log_widget = log_widget
-        self.stop_event = Event()
-
-    def run(self):
-        i, d = 0, 0
-        toolbar_width = 50
-        tw = toolbar_width - 4
-        while not self.stop_event.is_set():
-            w1 = i % tw
-            if w1 == 0:
-                d += 1
-                if i != 0:
-                    i += 1
-                    continue
-            w2 = tw - w1 - 1
-            s = f'{" " * w1}...{" " * w2}'
-            rm_last_line(self.log_widget)
-            # ToDo: can not interact with widget from thread. Use signal-slot
-            self.log_widget.appendPlainText(s if d % 2 else ''.join(reversed(s)))
-            self.log_widget.moveCursor(QTextCursor.End)
-            i += 1
-            self.stop_event.wait(0.2)
-
-
-def log(msg, log_widget: QPlainTextEdit, preloader=False):
-    # global preloader_thread
-    # if preloader_thread:
-    #     preloader_thread.stop_event.set()
-    #     preloader_thread.join()
-    #     preloader_thread = None
-    #     rm_last_line(log_widget)
-
+def log(msg, log_widget: QPlainTextEdit):
     log_widget.appendPlainText(msg)
     log_widget.moveCursor(QTextCursor.End)
-    # if preloader:
-    #     preloader_thread = PreloaderThread(log_widget)
-    #     preloader_thread.start()
 
 
 def uploaded_file_handler(data, window):
@@ -81,8 +32,7 @@ def error_handler(message_data, window=None):
     message = message_data.get('message') if isinstance(message_data, dict) else message_data
     if 'insufficient funds' in message:
         message = 'Error\n' \
-                  'Account cannot be created without MMR tokens.\n' \
-                  'Please send your generated address to info@memority.io to receive tokens.'
+                  'Account cannot be created without MMR tokens.'
     msg = QMessageBox()
     msg.setIcon(QMessageBox.Critical)
     msg.setText("Error")
@@ -131,7 +81,6 @@ def info_handler(message_data, window):
     log(
         message_data.get('message'),
         window.log_widget,
-        preloader=message_data.get('preloader', False)
     )
 
 
