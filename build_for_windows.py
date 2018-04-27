@@ -111,7 +111,7 @@ def main():
     print('-' * 100)
     print('Create nsi template')
     context = {
-        "version": f'alpha-{str(int(time.time()))}',
+        "version": sys.argv[1],
         "core_files": [
             (
                 os.path.join('core', *list(reversed(split(d)))[2:]),
@@ -131,7 +131,7 @@ def main():
     }
     compiled = jinja2.Environment(
         loader=jinja2.FileSystemLoader('.')
-    ).get_template('nsi_template.jinja2').render(context)
+    ).get_template('dist-utils\\nsi_template.jinja2').render(context)
 
     with open('memority.nsi', 'w') as f:
         f.write(compiled)
