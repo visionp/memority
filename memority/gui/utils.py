@@ -6,7 +6,7 @@ from bugtracking import raven_client
 
 __all__ = ['unlock_account', 'get_user_role', 'get_address', 'get_balance', 'get_token_price', 'get_host_ip',
            'create_account', 'generate_address', 'set_disk_space_for_hosting', 'get_disk_space_for_hosting',
-           'import_account', 'export_account']
+           'import_account', 'export_account', 'request_mmr']
 
 
 def unlock_account(_password):
@@ -88,6 +88,23 @@ async def generate_address(password, session):
             msg = data.get('message')
             error_handler(f'Generating address failed.\n{msg}')
             return False
+
+
+async def request_mmr(key, session):
+    async with session.post(
+            f'{settings.daemon_address}/request_mmr/',
+            json={
+                "key": key
+            }
+    ) as result:
+        data = await result.json()
+        if data.get('status') == 'success':
+            return data.get('balance')
+        else:
+            data = await result.json()
+            msg = data.get('message')
+            error_handler(f'Requesting MMR failed.\n{msg}')
+            return None
 
 
 async def import_account(filename, session):

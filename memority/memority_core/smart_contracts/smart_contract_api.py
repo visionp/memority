@@ -36,8 +36,8 @@ def create_w3():
 w3 = create_w3()
 
 
-async def wait_for_transaction_completion(tx_hash):
-    while True:
+async def wait_for_transaction_completion(tx_hash, max_tries=25):
+    while max_tries:
         try:
             tx_receipt = w3.eth.getTransactionReceipt(tx_hash)
             if tx_receipt:
@@ -54,7 +54,7 @@ async def wait_for_transaction_completion(tx_hash):
         except ValueError:
             print(f'pending transaction {tx_hash}')
             await asyncio.sleep(5)
-            continue
+        max_tries -= 1
 
 
 def import_private_key_to_eth(password, key=None):

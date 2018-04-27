@@ -1,11 +1,10 @@
+import aiohttp
 import asyncio
 import contextlib
 import logging
 import os
-from functools import partial
-
-import aiohttp
 from aiohttp import web, ClientConnectorError
+from functools import partial
 from sqlalchemy.exc import IntegrityError
 
 import smart_contracts
@@ -13,14 +12,15 @@ from bugtracking import raven_client
 from models import Host, RenterFile
 from settings import settings
 from smart_contracts import client_contract, token_contract, memo_db_contract, import_private_key_to_eth
-from smart_contracts.smart_contract_api import w3
+from smart_contracts.smart_contract_api import wait_for_transaction_completion
 from utils import ask_for_password, check_first_run, DecryptionError, get_ip
 
 # ToDo: review if all these views are required
 
 
 __all__ = ['upload_file', 'download_file', 'list_files', 'view_config', 'set_disk_space_for_hosting',
-           'upload_to_hoster', 'view_user_info', 'create_account', 'unlock', 'import_account', 'export_account']
+           'upload_to_hoster', 'view_user_info', 'create_account', 'unlock', 'import_account', 'export_account',
+           'request_mmr']
 
 logger = logging.getLogger('memority')
 
@@ -29,7 +29,7 @@ async def ask_user_for__(details, message, type_):
     return NotImplemented
 
 
-async def notify_user(message, preloader=False):
+async def notify_user(message):
     return NotImplemented
 
 
@@ -131,8 +131,7 @@ async def upload_file(**kwargs):
             return _error_response(f'Deposit can not be bigger than your balance.'
                                    f'| mmr balance: {token_balance}')
         await notify_user(f'Creating deposit for file {file.hash}, value: {tokens_to_deposit} MMR...'
-                          f'This can take up to 60 seconds, as transaction is being written in blockchain.',
-                          preloader=True)
+                          f'This can take up to 60 seconds, as transaction is being written in blockchain.')
         await client_contract.make_deposit(value=tokens_to_deposit, file_hash=file.hash)
 
         if not await token_contract.get_deposit(file_hash=file.hash):
@@ -159,7 +158,7 @@ async def upload_file(**kwargs):
         return _error_response("No hosters available!")
     logger.info(f'Uploading to hosters | file: {file.hash} '
                 f'| hosters: {", ".join([hoster.address for hoster in hosters])}')
-    await notify_user('Uploading file to hosters', preloader=True)
+    await notify_user('Uploading file to hosters')
     hosts_success = set()
     hosts_error = set()
     while True:
@@ -215,8 +214,7 @@ async def upload_file(**kwargs):
     try:
         logger.info(f'Sending file metadata to contract | file: {file.hash}')
         await notify_user(f'Sending file metadata to contract | file: {file.hash}...\n'
-                          f'This can take up to 60 seconds, as transaction is being written in blockchain.',
-                          preloader=True)
+                          f'This can take up to 60 seconds, as transaction is being written in blockchain.')
         await client_contract.add_hosts(**file_metadata_for_contract)
     except Exception as err:
         raven_client.captureException()
@@ -235,7 +233,7 @@ async def upload_file(**kwargs):
     logger.info(f'Uploading host list to hosters | file: {file.hash} '
                 f'| hosters: {", ".join([hoster.address for hoster in hosters])}')
     await notify_user(f'Uploading host list to hosters | file: {file.hash} '
-                      f'| hosters: {", ".join([hoster.address for hoster in hosters])}', preloader=True)
+                      f'| hosters: {", ".join([hoster.address for hoster in hosters])}')
     file_hosters = {
         "hosts": [hoster.address for hoster in hosters]
     }
@@ -293,7 +291,7 @@ async def download_file(**kwargs):
     file_hosters = file.hosters
     for hoster in file_hosters:
         logger.info(f'Trying to download file... | file: {file_hash} | hoster: {hoster.address}')
-        await notify_user(f'Trying to download file... | file: {file_hash} | hoster: {hoster.address}', preloader=True)
+        await notify_user(f'Trying to download file... | file: {file_hash} | hoster: {hoster.address}')
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.get(f'http://{hoster.ip}/files/{file_hash}/') as response:
@@ -498,6 +496,34 @@ async def unlock(request: web.Request):
     if settings.address.lower() not in [a.lower() for a in w3.eth.accounts]:
         import_private_key_to_eth(password=password)
     return web.json_response({"status": "success"})
+
+
+async def request_mmr(request):
+    data = await request.json()
+    key = data.get('key')
+    async with aiohttp.ClientSession() as session:
+        async with session.post(
+                'https://api.memority.io/api/app/new',
+                json={
+                    "code": key,
+                    "address": settings.address
+                },
+                headers={
+                    "Accept": "application/json"
+                }
+        ) as resp:
+            data = await resp.json()
+            if data.get('status') == 'success':
+                tx = data.get('result')
+                await wait_for_transaction_completion(tx)
+                return web.json_response(
+                    {
+                        "status": "success",
+                        "balance": token_contract.get_mmr_balance()
+                    }
+                )
+            else:
+                return web.json_response(_error_response(data.get('error')))
 
 
 async def set_disk_space_for_hosting(request: web.Request):
