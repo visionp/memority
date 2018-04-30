@@ -53,7 +53,7 @@ async def wait_for_transaction_completion(tx_hash, max_tries=25):
                 break
         except ValueError:
             print(f'pending transaction {tx_hash}')
-            await asyncio.sleep(5)
+        await asyncio.sleep(5)
         max_tries -= 1
 
 
